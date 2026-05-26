@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>goSTOPS · Digital Contact Card</title>
+<meta name="description" content="goSTOPS digital business card — tap to save the contact, call, message, or book a stay." />
+
+<!-- ============================================================= -->
+<!--  goSTOPS  ·  e-Contact Card  ·  reusable template             -->
+<!--  HOW TO USE:                                                  -->
+<!--  1. Copy this file, rename it (e.g. vc-prateek.html).          -->
+<!--  2. Edit ONLY the CONFIG block near the bottom of <script>.    -->
+<!--  3. Host it, generate a QR pointing to its URL, print on card. -->
+<!--  Keep the /assets folder next to this file when you host it.  -->
+<!-- ============================================================= -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;0,6..12,900&display=swap" rel="stylesheet" />
+
+<style>
+  /* ---------- goSTOPS brand tokens ---------- */
+  :root{
+    --pink:#ED3668;  --purple:#6667AE; --sky:#44C7F4;
+    --orange:#F79839;--teal:#48C1C4;   --yellow:#FDCC08;
+    --stripe:linear-gradient(90deg,
+      var(--pink) 0 16.66%, var(--purple) 16.66% 33.33%,
+      var(--sky) 33.33% 50%, var(--orange) 50% 66.66%,
+      var(--teal) 66.66% 83.33%, var(--yellow) 83.33% 100%);
+    --lift:linear-gradient(135deg,
+      var(--pink), var(--purple), var(--sky),
+      var(--orange), var(--teal), var(--yellow));
+    --ring:conic-gradient(from -90deg,
+      var(--pink) 0 60deg, var(--purple) 60deg 120deg,
+      var(--sky) 120deg 180deg, var(--orange) 180deg 240deg,
+      var(--teal) 240deg 300deg, var(--yellow) 300deg 360deg);
+    --radius:22px;
+    --maxw:430px;
+  }
+  /* ---------- light canvas (print / website) ---------- */
+  html[data-theme="light"]{
+    --bg:#FDF8F6; --surface:#FFFFFF; --surface-2:#FBF4F1;
+    --text:#09090F; --muted:#6F6F77; --border:rgba(9,9,15,.10);
+    --shadow:0 18px 50px -22px rgba(9,9,15,.30);
+    --flourish:.10;
+  }
+  /* ---------- dark canvas (app / ambient) ---------- */
+  html[data-theme="dark"]{
+    --bg:#09090F; --surface:#16161E; --surface-2:#1F1F29;
+    --text:#FDF8F6; --muted:#9A9AA4; --border:rgba(255,255,255,.12);
+    --shadow:0 18px 50px -20px rgba(0,0,0,.70);
+    --flourish:.16;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Nunito Sans',system-ui,-apple-system,sans-serif;
+    background:var(--bg); color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    transition:background .35s ease,color .35s ease;
+    display:flex; flex-direction:column; align-items:center;
+    padding:0 18px env(safe-area-inset-bottom,20px);
+    min-height:100%;
+  }
+
+  /* finger stripe — the brand constant, on every surface */
+  .stripe{
+    width:100%; height:6px; background:var(--stripe);
+    position:fixed; top:0; left:0; z-index:50;
+  }
+
+  .wrap{
+    position:relative; z-index:1;
+    width:100%; max-width:var(--maxw);
+    margin:0 auto; padding:30px 0 16px;
+  }
+
+  /* header — wordmark left, controls right */
+  .topbar{
+    position:relative; z-index:6;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; margin-bottom:24px;
+  }
+  .logo-wordmark{height:38px; width:auto; display:block;}
+  .controls{display:flex; gap:8px; flex:none;}
+  .icon-btn{
+    width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--border); background:var(--surface);
+    color:var(--text); cursor:pointer; display:grid;place-items:center;
+    transition:transform .15s ease,background .25s ease;
+  }
+  .icon-btn:active{transform:scale(.9);}
+  .icon-btn svg{width:18px;height:18px;}
+
+  /* card stage */
+  .stage{position:relative;}
+
+  /* main card */
+  .card{
+    position:relative; z-index:3;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:26px 22px 24px; text-align:center;
+    overflow:hidden;
+  }
+  .card::before{ /* top inner stripe accent */
+    content:""; position:absolute; left:0; right:0; top:0; height:5px;
+    background:var(--stripe); z-index:2;
+  }
+  /* orange shaka hand — faint brand flourish inside the card */
+  .card-flourish{
+    position:absolute; z-index:0; pointer-events:none;
+    width:230px; height:auto;
+    right:-58px; bottom:-46px;
+    opacity:var(--flourish);
+  }
+  .card > *:not(.card-flourish){position:relative; z-index:1;}
+
+  /* avatar with finger-stripe ring */
+  .avatar-ring{
+    width:128px;height:128px;border-radius:50%;
+    background:var(--ring); padding:6px; margin:6px auto 0;
+    display:grid;place-items:center;
+    position:relative; z-index:1;
+  }
+  .avatar{
+    width:100%;height:100%;border-radius:50%;
+    background:var(--surface-2); overflow:hidden;
+    display:grid;place-items:center;
+    border:4px solid var(--surface);
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .avatar .initials{
+    font-weight:900;font-size:44px;letter-spacing:-.03em;
+    color:var(--text);
+  }
+
+  .name{
+    font-weight:900;font-size:30px;letter-spacing:-.025em;
+    margin-top:16px;line-height:1.1;
+  }
+  .role{
+    font-weight:700;font-size:15px;color:var(--muted);
+    margin-top:5px;
+  }
+  .org-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    margin-top:12px;padding:5px 12px;border-radius:999px;
+    background:var(--surface-2);border:1px solid var(--border);
+    font-weight:800;font-size:12px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .org-tag .dot{
+    width:7px;height:7px;border-radius:50%;background:var(--pink);
+  }
+
+  /* buttons */
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:9px;
+    width:100%;border:none;cursor:pointer;
+    font-family:inherit;font-weight:800;font-size:15.5px;
+    border-radius:14px;padding:15px 16px;
+    transition:transform .14s ease,filter .2s ease;
+    text-decoration:none;
+  }
+  .btn:active{transform:scale(.975);}
+  .btn svg{width:19px;height:19px;}
+  .btn-primary{
+    background:var(--pink);color:#FFFFFF;
+    margin-top:20px;box-shadow:0 10px 24px -12px rgba(237,54,104,.9);
+  }
+  .btn-primary:hover{filter:brightness(1.04);}
+  .btn-ghost{
+    background:var(--surface-2);color:var(--text);
+    border:1px solid var(--border);margin-top:10px;
+  }
+
+  /* quick-action trio */
+  .quick{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:10px;margin-top:16px;
+  }
+  .quick a{
+    text-decoration:none;color:var(--text);
+    background:var(--surface-2);border:1px solid var(--border);
+    border-radius:14px;padding:14px 6px 11px;
+    display:flex;flex-direction:column;align-items:center;gap:7px;
+    font-weight:800;font-size:12px;
+    transition:transform .14s ease;
+  }
+  .quick a:active{transform:scale(.95);}
+  .quick .q-ic{
+    width:38px;height:38px;border-radius:50%;
+    display:grid;place-items:center;color:#fff;
+  }
+  .quick .q-ic svg{width:18px;height:18px;}
+  .q-call .q-ic{background:var(--teal);}
+  .q-mail .q-ic{background:var(--purple);}
+  .q-wa   .q-ic{background:#25D366;}
+
+  /* offer card — digital "lift" gradient earned on a celebration */
+  .offer{
+    margin-top:16px;border-radius:18px;overflow:hidden;
+    background:var(--lift);padding:2px;
+  }
+  .offer-inner{
+    background:var(--surface);border-radius:16px;
+    padding:18px 16px;text-align:center;
+  }
+  .offer-eyebrow{
+    font-weight:900;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;
+    background:var(--lift);-webkit-background-clip:text;
+    background-clip:text;color:transparent;
+  }
+  .offer-title{
+    font-weight:900;font-size:19px;letter-spacing:-.02em;
+    margin-top:5px;
+  }
+  .offer-desc{
+    font-size:13px;color:var(--muted);font-weight:600;
+    margin-top:4px;
+  }
+  .offer-code{
+    margin-top:12px;display:inline-flex;align-items:center;gap:8px;
+    border:1.5px dashed var(--border);border-radius:10px;
+    padding:8px 12px;background:var(--surface-2);
+    cursor:pointer;transition:transform .14s ease;
+  }
+  .offer-code:active{transform:scale(.96);}
+  .offer-code .lbl{
+    font-size:10px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .offer-code .val{
+    font-weight:900;font-size:15px;letter-spacing:.06em;
+  }
+  .offer-code .copy-ic{width:14px;height:14px;color:var(--muted);}
+  .offer .btn{margin-top:13px;}
+  .offer-cta{background:#09090F;color:#FDF8F6;}
+  html[data-theme="dark"] .offer-cta{background:#FDF8F6;color:#09090F;}
+
+  /* office card — address (2/3) + map widget (1/3) */
+  .office{
+    margin-top:16px; display:flex; gap:9px; text-align:left;
+  }
+  .office-left{
+    flex:2 1 0; min-width:0;
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:14px; padding:12px 14px 13px;
+  }
+  .office-head{display:flex; align-items:center; gap:8px;}
+  .office-pin{
+    width:24px;height:24px;flex:none;border-radius:50%;
+    background:var(--pink);display:grid;place-items:center;color:#fff;
+  }
+  .office-pin svg{width:13px;height:13px;}
+  .office-label{
+    font-weight:900;font-size:10.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--text);
+    flex:1; min-width:0;
+  }
+  .copy-addr-btn{
+    flex:none;width:28px;height:28px;border-radius:8px;
+    background:transparent;border:1px solid var(--border);
+    color:var(--muted);cursor:pointer;font-family:inherit;
+    display:grid;place-items:center;
+    transition:transform .14s ease,background .2s ease,color .2s ease;
+  }
+  .copy-addr-btn:hover{background:var(--surface);color:var(--text);}
+  .copy-addr-btn:active{transform:scale(.9);}
+  .copy-addr-btn svg{width:13px;height:13px;}
+  .office-addr{
+    font-size:12px;font-weight:600;color:var(--muted);
+    margin-top:8px;line-height:1.5;
+  }
+  /* clickable map tile on the right */
+  .office-map{
+    flex:1 1 0; min-width:0;
+    border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; text-decoration:none; color:var(--text);
+    display:flex; flex-direction:column;
+    background:var(--surface-2);
+    transition:transform .14s ease;
+  }
+  .office-map:active{transform:scale(.97);}
+  .office-map .map-art{display:block; width:100%; height:auto; flex:none;}
+  .office-map .map-cta{
+    flex:1; display:grid; place-items:center;
+    padding:6px 6px; text-align:center;
+    font-weight:900; font-size:10.5px; letter-spacing:.04em;
+    color:var(--text); background:var(--surface);
+    border-top:1px solid var(--border);
+    line-height:1.2;
+  }
+
+  /* socials */
+  .socials-label{
+    margin-top:24px;font-weight:800;font-size:11px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  }
+  .socials{
+    display:flex;justify-content:center;flex-wrap:wrap;
+    gap:11px;margin-top:12px;
+  }
+  .socials a{
+    width:46px;height:46px;border-radius:50%;
+    display:grid;place-items:center;color:#fff;
+    text-decoration:none;transition:transform .15s ease;
+  }
+  .socials a:active{transform:scale(.9);}
+  .socials a svg{width:21px;height:21px;}
+
+  /* footer */
+  .footer{
+    text-align:center;margin-top:24px;padding-top:18px;
+    border-top:1px solid var(--border);
+  }
+  .footer .mono{height:34px;width:auto;display:block;margin:0 auto 8px;}
+  .footer .tag{
+    font-weight:900;font-size:14px;letter-spacing:-.01em;
+  }
+  .footer .tag span{color:var(--pink);}
+  .footer .web{
+    display:inline-block;margin-top:6px;
+    font-weight:700;font-size:13px;color:var(--muted);
+    text-decoration:none;
+  }
+  .footer .mini-stripe{
+    width:64px;height:4px;border-radius:99px;
+    background:var(--stripe);margin:14px auto 0;
+  }
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,160%);
+    background:#09090F;color:#FDF8F6;
+    padding:12px 20px;border-radius:999px;
+    font-weight:800;font-size:13px;z-index:80;
+    box-shadow:0 12px 30px -8px rgba(0,0,0,.5);
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.2);
+    display:flex;align-items:center;gap:8px;
+  }
+  .toast.show{transform:translate(-50%,0);}
+  .toast svg{width:15px;height:15px;color:var(--yellow);}
+
+  @media (max-width:360px){
+    .name{font-size:26px;}
+    .quick a{font-size:11px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="stripe"></div>
+
+<main class="wrap">
+
+  <!-- header -->
+  <div class="topbar">
+    <img class="logo-wordmark" src="assets/gostops-wordmark.svg" alt="goSTOPS" />
+    <div class="controls">
+      <button class="icon-btn" id="shareBtn" title="Share this card" aria-label="Share this card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle light or dark mode">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- card stage -->
+  <div class="stage">
+
+    <!-- contact card -->
+    <section class="card">
+
+      <!-- orange shaka hand — faint brand flourish -->
+      <img class="card-flourish" src="assets/hand-orange.svg" alt="" aria-hidden="true" />
+
+      <div class="avatar-ring">
+        <div class="avatar" id="avatar"></div>
+      </div>
+
+      <h1 class="name" id="name"></h1>
+      <p class="role" id="role"></p>
+      <div class="org-tag"><span class="dot"></span><span id="orgTag"></span></div>
+
+      <!-- primary: save to phone -->
+      <button class="btn btn-primary" id="saveBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12M7 11l5 5 5-5M5 21h14"/>
+        </svg>
+        Save to Contacts
+      </button>
+
+      <!-- schedule a call -->
+      <a class="btn btn-ghost" id="scheduleBtn" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4.5" width="18" height="16" rx="3"/>
+          <path d="M3 9h18M8 2.5v4M16 2.5v4"/>
+          <path d="M8.5 14.5l2.4 2.4 4.6-5"/>
+        </svg>
+        Schedule a Call
+      </a>
+
+      <!-- quick actions -->
+      <div class="quick">
+        <a class="q-call" id="qCall">
+          <span class="q-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.6 3h-3A1.6 1.6 0 0 0 2 4.6 17 17 0 0 0 19.4 22 1.6 1.6 0 0 0 21 20.4v-3a1.6 1.6 0 0 0-1.3-1.6l-3-.6a1.6 1.6 0 0 0-1.6.7l-1 1.4A13 13 0 0 1 7.3 11l1.4-1a1.6 1.6 0 0 0 .7-1.6l-.6-3A1.6 1.6 0 0 0 6.6 3Z"/>
+            </svg>
+          </span>Call
+        </a>
+        <a class="q-mail" id="qMail">
+          <span class="q-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/>
+              <path d="M3 6.5l9 6.5 9-6.5"/>
+            </svg>
+          </span>Email
+        </a>
+        <a class="q-wa" id="qWa" target="_blank" rel="noopener">
+          <span class="q-ic">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.8 4.9-1.3A10 10 0 1 0 12 2Zm5.8 14.1c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.8-.6-3-1.3-5-4.4-5.2-4.6-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6c-.2.2-.4.4-.2.7.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.7-.1l.8-1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3.1.2.1.9-.1 1.6Z"/>
+            </svg>
+          </span>WhatsApp
+        </a>
+      </div>
+
+      <!-- office -->
+      <div class="office" id="officeBlock">
+        <div class="office-left">
+          <div class="office-head">
+            <span class="office-pin" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s-7-8-7-13a7 7 0 1 1 14 0c0 5-7 13-7 13z"/>
+                <circle cx="12" cy="9" r="2.6" fill="currentColor" stroke="none"/>
+              </svg>
+            </span>
+            <span class="office-label" id="officeLabel"></span>
+            <button class="copy-addr-btn" id="copyAddrBtn" title="Copy address" aria-label="Copy address">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="8" width="12" height="12" rx="2"/>
+                <path d="M5 16V6a2 2 0 0 1 2-2h10"/>
+              </svg>
+            </button>
+          </div>
+          <div class="office-addr" id="officeAddr"></div>
+        </div>
+        <a class="office-map" id="officeBtn" target="_blank" rel="noopener" aria-label="Get directions">
+          <svg class="map-art" viewBox="0 0 130 86" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+            <rect width="130" height="86" fill="#E8F2F2"/>
+            <rect x="0" y="0" width="44" height="34" fill="#D6EFE4"/>
+            <rect x="90" y="56" width="40" height="30" fill="#FFF1D6"/>
+            <path d="M-5 60 Q35 38 70 50 T135 32" stroke="#fff" stroke-width="6" fill="none"/>
+            <path d="M48 -5 Q56 25 70 45 T82 92" stroke="#fff" stroke-width="5" fill="none"/>
+            <g transform="translate(70 36)">
+              <circle r="11" fill="#ED3668"/>
+              <path d="M-8 6 L0 22 L8 6 Z" fill="#ED3668"/>
+              <circle r="4" cy="-1" fill="#fff"/>
+            </g>
+          </svg>
+          <span class="map-cta">Get Directions &rsaquo;</span>
+        </a>
+      </div>
+
+      <!-- offer -->
+      <div class="offer" id="offerBlock">
+        <div class="offer-inner">
+          <div class="offer-eyebrow" id="offerEyebrow"></div>
+          <div class="offer-title" id="offerTitle"></div>
+          <div class="offer-desc" id="offerDesc"></div>
+          <div class="offer-code" id="offerCode">
+            <span class="lbl">Code</span>
+            <span class="val" id="offerCodeVal"></span>
+            <svg class="copy-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="11" height="11" rx="2"/>
+              <path d="M5 15V5a2 2 0 0 1 2-2h8"/>
+            </svg>
+          </div>
+          <a class="btn offer-cta" id="offerCta" target="_blank" rel="noopener"></a>
+        </div>
+      </div>
+
+      <!-- socials -->
+      <div class="socials-label">Follow goSTOPS</div>
+      <div class="socials" id="socials"></div>
+
+      <!-- footer -->
+      <div class="footer">
+        <img class="mono" src="assets/gostops-monogram.svg" alt="goSTOPS" />
+        <div class="tag" id="footTag"></div>
+        <a class="web" id="footWeb" target="_blank" rel="noopener"></a>
+        <div class="mini-stripe"></div>
+      </div>
+
+    </section>
+  </div>
+
+</main>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+/* ================================================================
+   CONFIG  —  EDIT THIS BLOCK ONLY. One file per person.
+   Placeholder values are marked  EDIT.  Leave a field as ""
+   (empty string) to hide it automatically.
+   ================================================================ */
+const CONFIG = {
+  /* --- the person --- */
+  firstName : "Prateek",
+  lastName  : "Arora",
+  title     : "Sr. Manager",
+  department: "Operations",
+  phone     : "+917597367957",                 // E.164, no spaces
+  email     : "prateek.arora@gostops.com",
+  photoUrl  : "",                               // EDIT  e.g. "prateek.jpg" — empty = show initials
+
+  /* --- schedule-a-call link (Calendly / Cal.com / any URL) --- */
+  scheduleUrl: "https://calendly.com/your-handle/15min",  // EDIT
+
+  /* --- the booking offer (a digital "celebration" — gets the gradient) --- */
+  offer: {
+    eyebrow : "Traveller Perk",
+    title   : "Flat 15% off your first stay",   // EDIT
+    desc    : "Valid across 30+ goSTOPS hostels in India.",  // EDIT
+    code    : "PRATEEK15",                      // EDIT  — leave "" to hide the code chip
+    ctaText : "Book a Stay",
+    ctaUrl  : "https://www.gostops.com"         // EDIT
+  },
+
+  /* --- goSTOPS socials. Remove a line or set url:"" to hide it.
+         type can be: instagram | linkedin | youtube | facebook | x | web --- */
+  socials: [
+    { type:"instagram", url:"https://instagram.com/gostops"   },  // EDIT
+    { type:"linkedin",  url:"https://linkedin.com/company/gostops" }, // EDIT
+    { type:"youtube",   url:"https://youtube.com/@gostops"     },  // EDIT
+    { type:"web",       url:"https://www.gostops.com"          }   // EDIT
+  ],
+
+  /* --- office address shown on the card --- */
+  office: {
+    label   : "Bengaluru Office",              // EDIT
+    address : "754/L-185, Sector 6, Behind Silk Board Bus Stand, Outer Ring Road, Bengaluru, Karnataka 560102",  // EDIT
+    mapsUrl : ""                                // EDIT  — leave "" and one will be built from the address
+  },
+
+  /* --- footer --- */
+  tagline : "goMORE. beMORE.",                  // EDIT
+  website : "www.gostops.com"
+};
+/* ================ END OF CONFIG — no edits needed below ================ */
+
+
+/* ---------- brand colours for socials ---------- */
+const BRAND = {pink:"#ED3668",purple:"#6667AE",sky:"#44C7F4",orange:"#F79839",teal:"#48C1C4",yellow:"#FDCC08"};
+
+/* ---------- social icon set ---------- */
+const SOCIAL = {
+  instagram:{c:BRAND.pink, svg:'<rect x="3" y="3" width="18" height="18" rx="5.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.4" cy="6.6" r="1.3" fill="currentColor"/>'},
+  linkedin :{c:BRAND.sky,  svg:'<path fill="currentColor" d="M4.5 3.5A2 2 0 1 1 4.5 7.5 2 2 0 0 1 4.5 3.5ZM2.8 9h3.4v11.2H2.8Zm6 0h3.3v1.5h.1c.5-.9 1.7-1.9 3.5-1.9 3.7 0 4.4 2.4 4.4 5.6v6h-3.4v-5.3c0-1.3 0-2.9-1.8-2.9s-2 1.4-2 2.8v5.4H8.8Z"/>'},
+  youtube  :{c:"#FF0000", svg:'<path fill="currentColor" d="M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12 31 31 0 0 0 2 15.8a3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 22.4 12 31 31 0 0 0 22 8.2ZM10 15.1V8.9l5.3 3.1Z"/>'},
+  facebook :{c:"#1877F2", svg:'<path fill="currentColor" d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12Z"/>'},
+  x        :{c:"#0F0F12", svg:'<path fill="currentColor" d="M17.5 3h3l-6.6 7.5L21.7 21h-6l-4.7-6.1L5.6 21H2.5l7-8L2.6 3h6.2l4.2 5.6Zm-1 16h1.7L7.6 4.8H5.8Z"/>'},
+  web      :{c:BRAND.teal, svg:'<circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 2.8c2.6 2.6 2.6 15.8 0 18.4M12 2.8c-2.6 2.6-2.6 15.8 0 18.4" fill="none" stroke="currentColor" stroke-width="2"/>'}
+};
+
+const $ = id => document.getElementById(id);
+const C = CONFIG;
+const fullName = (C.firstName + " " + C.lastName).trim();
+
+/* ---------- populate the card ---------- */
+$("name").textContent  = fullName;
+$("role").textContent  = [C.title, C.department].filter(Boolean).join(" · ");
+$("orgTag").textContent= "goSTOPS";
+document.title = fullName + " · goSTOPS";
+
+/* avatar */
+const av = $("avatar");
+if (C.photoUrl){
+  const img = new Image();
+  img.src = C.photoUrl; img.alt = fullName;
+  img.onerror = ()=>{ av.innerHTML='<span class="initials">'+initials()+'</span>'; };
+  av.appendChild(img);
+} else {
+  av.innerHTML = '<span class="initials">'+initials()+'</span>';
+}
+function initials(){
+  return ((C.firstName[0]||"") + (C.lastName[0]||"")).toUpperCase();
+}
+
+/* quick actions */
+$("qCall").href = "tel:" + C.phone;
+$("qMail").href = "mailto:" + C.email;
+$("qWa").href   = "https://wa.me/" + C.phone.replace(/[^0-9]/g,"");
+
+/* schedule */
+if (C.scheduleUrl){ $("scheduleBtn").href = C.scheduleUrl; }
+else { $("scheduleBtn").style.display = "none"; }
+
+/* offer */
+if (C.offer && C.offer.title){
+  $("offerEyebrow").textContent = C.offer.eyebrow || "";
+  $("offerTitle").textContent   = C.offer.title;
+  $("offerDesc").textContent    = C.offer.desc || "";
+  const cta = $("offerCta");
+  cta.textContent = C.offer.ctaText || "Book Now";
+  cta.href        = C.offer.ctaUrl || "#";
+  if (C.offer.code){
+    $("offerCodeVal").textContent = C.offer.code;
+  } else {
+    $("offerCode").style.display = "none";
+  }
+} else {
+  $("offerBlock").style.display = "none";
+}
+
+/* socials */
+const sWrap = $("socials");
+(C.socials||[]).forEach(s=>{
+  const def = SOCIAL[s.type];
+  if (!def || !s.url) return;
+  const a = document.createElement("a");
+  a.href = s.url; a.target = "_blank"; a.rel = "noopener";
+  a.style.background = def.c;
+  a.setAttribute("aria-label", s.type);
+  a.innerHTML = '<svg viewBox="0 0 24 24">'+def.svg+'</svg>';
+  sWrap.appendChild(a);
+});
+if (!sWrap.children.length){
+  $("socials").style.display = "none";
+  document.querySelector(".socials-label").style.display = "none";
+}
+
+/* office */
+if (C.office && C.office.address){
+  $("officeLabel").textContent = C.office.label || "Office";
+  $("officeAddr").textContent  = C.office.address;
+  const url = C.office.mapsUrl ||
+    ("https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(C.office.address));
+  $("officeBtn").href = url;
+  $("copyAddrBtn").addEventListener("click", (e)=>{
+    e.preventDefault();
+    navigator.clipboard && navigator.clipboard.writeText(C.office.address)
+      .then(()=>showToast("Address copied"))
+      .catch(()=>showToast("Address: "+C.office.address));
+  });
+} else {
+  $("officeBlock").style.display = "none";
+}
+
+/* footer */
+$("footTag").innerHTML = (C.tagline||"").replace(/\./g,'<span>.</span>');
+if (C.website){
+  const w = $("footWeb");
+  w.textContent = C.website;
+  w.href = C.website.startsWith("http") ? C.website : "https://"+C.website;
+}
+
+/* ---------- vCard (.vcf) generation + download ---------- */
+function buildVCard(){
+  const esc = v => String(v||"").replace(/([,;\\])/g,'\\$1').replace(/\n/g,'\\n');
+  const L = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "N:"+esc(C.lastName)+";"+esc(C.firstName)+";;;",
+    "FN:"+esc(fullName),
+    "ORG:goSTOPS;"+esc(C.department),
+    "TITLE:"+esc([C.title,C.department].filter(Boolean).join(" - ")),
+    "TEL;TYPE=CELL,VOICE:"+C.phone,
+    "EMAIL;TYPE=WORK:"+C.email
+  ];
+  if (C.photoUrl && /^https?:/i.test(C.photoUrl)){
+    L.push("PHOTO;VALUE=URI:"+C.photoUrl);
+  }
+  if (C.website){
+    L.push("URL:"+(C.website.startsWith("http")?C.website:"https://"+C.website));
+  }
+  L.push("NOTE:Connected via goSTOPS digital card");
+  L.push("REV:"+new Date().toISOString());
+  L.push("END:VCARD");
+  return L.join("\r\n");
+}
+
+$("saveBtn").addEventListener("click", ()=>{
+  const blob = new Blob([buildVCard()], {type:"text/vcard;charset=utf-8"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url;
+  a.download = fullName.replace(/\s+/g,"_") + ".vcf";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  showToast("Contact card ready to save");
+});
+
+/* ---------- copy promo code ---------- */
+$("offerCode").addEventListener("click", ()=>{
+  const code = C.offer && C.offer.code;
+  if (!code) return;
+  navigator.clipboard && navigator.clipboard.writeText(code)
+    .then(()=>showToast("Code "+code+" copied"))
+    .catch(()=>showToast("Code: "+code));
+});
+
+/* ---------- share ---------- */
+$("shareBtn").addEventListener("click", async ()=>{
+  const data = {title:fullName+" · goSTOPS", text:"Here's "+C.firstName+"'s goSTOPS contact card", url:location.href};
+  try{
+    if (navigator.share){ await navigator.share(data); }
+    else if (navigator.clipboard){ await navigator.clipboard.writeText(location.href); showToast("Link copied"); }
+  }catch(e){/* user cancelled */}
+});
+
+/* ---------- theme toggle ---------- */
+const SUN  = '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1.5 12h3M19.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>';
+const MOON = '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/>';
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("themeIcon").innerHTML = (t==="dark") ? SUN : MOON;
+  try{ localStorage.setItem("gostops-vc-theme", t); }catch(e){}
+}
+let saved = "light";
+try{ saved = localStorage.getItem("gostops-vc-theme") || "light"; }catch(e){}
+applyTheme(saved);
+$("themeBtn").addEventListener("click", ()=>{
+  const next = document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark";
+  applyTheme(next);
+});
+
+/* ---------- toast ---------- */
+let toastTimer;
+function showToast(msg){
+  $("toastMsg").textContent = msg;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>$("toast").classList.remove("show"), 2600);
+}
+</script>
+</body>
+</html>
